@@ -1,0 +1,24 @@
+FINANCIAL RATIO ENGINE REPORT
+
+Dataset Name: financial_ratios
+
+Total Rows: 1184
+Total Columns: 7
+
+Calculated Metrics:
+1. Net Profit Margin
+2. Return on Equity (ROE)
+3. Debt to Equity Ratio
+4. Asset Turnover Ratio
+5. Free Cash Flow
+
+Storage:
+- Excel File Created
+- SQLite Table Created
+
+Validation:
+- Row Count Verified
+- Data Successfully Loaded
+
+Status:
+SUCCESS

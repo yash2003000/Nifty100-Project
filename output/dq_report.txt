@@ -1,0 +1,21 @@
+NIFTY100 DATA QUALITY REPORT
+
+Profit & Loss Dataset
+Rows: 1276
+Columns: 15
+
+Balance Sheet Dataset
+Rows: 1312
+Columns: 13
+
+Cash Flow Dataset
+Rows: 1187
+Columns: 7
+
+Analysis Dataset
+Rows: 20
+Columns: 6
+
+Companies Dataset
+Rows: 92
+Columns: 12
