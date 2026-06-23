@@ -46,3 +46,10 @@ CREATE TABLE financial_ratios (
     company_id TEXT,
     year TEXT
 );
+
+CREATE TABLE load_audit (
+    table_name TEXT,
+    rows_loaded INTEGER,
+    load_timestamp TEXT,
+    status TEXT
+);

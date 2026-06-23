@@ -50,3 +50,32 @@ def load_prosandcons():
     df = pd.read_excel(file_path, header=1)
 
     return df
+
+def load_sectors():
+    file_path = RAW_DATA_PATH / "sectors.xlsx"
+    df = pd.read_excel(file_path)
+    return df
+
+
+def load_stock_prices():
+    file_path = RAW_DATA_PATH / "stock_prices.xlsx"
+    df = pd.read_excel(file_path)
+    return df
+
+
+def load_peer_groups():
+    file_path = RAW_DATA_PATH / "peer_groups.xlsx"
+    df = pd.read_excel(file_path)
+    return df
+
+
+def load_market_cap():
+    file_path = RAW_DATA_PATH / "market_cap.xlsx"
+    df = pd.read_excel(file_path)
+    return df
+
+
+def load_financial_ratios():
+    file_path = RAW_DATA_PATH / "financial_ratios.xlsx"
+    df = pd.read_excel(file_path)
+    return df
