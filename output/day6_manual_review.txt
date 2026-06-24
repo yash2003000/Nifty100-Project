@@ -1,0 +1,20 @@
+DAY 6 MANUAL REVIEW
+
+Random Companies Reviewed:
+COALINDIA - 13 years
+ADANIPOWER - 13 years
+PFC - 13 years
+HDFCBANK - 13 years
+TCS - 13 years
+
+Companies With Less Than 5 Years Data:
+JIOFIN - 3 years
+
+Review Notes:
+JIOFIN is a recently listed company and limited historical data is expected.
+
+Loader Bugs Found:
+None
+
+Status:
+PASS
