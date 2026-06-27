@@ -95,3 +95,88 @@ def validate_opm(computed_opm, source_opm):
         return False
 
     return abs(computed_opm - source_opm) > 1
+def debt_to_equity(borrowings, equity_capital, reserves):
+    """
+    Debt to Equity Ratio
+    """
+
+    equity = equity_capital + reserves
+
+    if borrowings == 0:
+        return 0
+
+    if equity <= 0:
+        return None
+
+    return round(borrowings / equity, 2)
+def high_leverage_flag(de_ratio, broad_sector):
+    """
+    Flag highly leveraged companies
+    """
+
+    if de_ratio is None:
+        return False
+
+    if broad_sector == "Financials":
+        return False
+
+    return de_ratio > 5
+def interest_coverage_ratio(
+    operating_profit,
+    other_income,
+    interest
+):
+    """
+    Interest Coverage Ratio
+    """
+
+    if interest == 0:
+        return None
+
+    return round(
+        (operating_profit + other_income) / interest,
+        2
+    )
+def icr_label(icr):
+    """
+    Label debt free companies
+    """
+
+    if icr is None:
+        return "Debt Free"
+
+    return ""
+def icr_warning_flag(icr):
+    """
+    Warn if company may struggle
+    to cover interest payments
+    """
+
+    if icr is None:
+        return False
+
+    return icr < 1.5
+def net_debt(
+    borrowings,
+    investments
+):
+    """
+    Net Debt
+    """
+
+    return borrowings - investments
+def asset_turnover(
+    sales,
+    total_assets
+):
+    """
+    Asset Turnover Ratio
+    """
+
+    if total_assets == 0:
+        return None
+
+    return round(
+        sales / total_assets,
+        2
+    )
