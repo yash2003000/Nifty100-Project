@@ -1,0 +1,28 @@
+Sprint 2 Day 12 Validation
+
+financial_ratios table populated successfully.
+
+Row Count:
+1383
+
+Required KPI Columns Verified:
+- net_profit_margin_pct
+- operating_profit_margin_pct
+- return_on_equity_pct
+- debt_to_equity
+- interest_coverage
+- asset_turnover
+- free_cash_flow_cr
+- capex_cr
+- earnings_per_share
+- book_value_per_share
+- dividend_payout_ratio_pct
+- total_debt_cr
+- cash_from_operations_cr
+- revenue_cagr_5yr
+- pat_cagr_5yr
+- eps_cagr_5yr
+- composite_quality_score
+
+Status: PASS
+Date: 01-Jul-2026
