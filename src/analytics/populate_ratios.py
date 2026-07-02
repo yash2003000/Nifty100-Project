@@ -40,6 +40,21 @@ cf = pd.read_sql(
     "SELECT * FROM cashflow",
     conn
 )
+sectors = pd.read_sql(
+    "SELECT company_id, broad_sector FROM sectors",
+    conn
+)
+companies = pd.read_sql(
+    """
+    SELECT
+        id AS company_master_id,
+        company_name,
+        roe_percentage,
+        roce_percentage
+    FROM companies
+    """,
+    conn
+)
 
 # ------------------------------------
 # MERGE DATA
@@ -56,6 +71,18 @@ df = (
         on=["company_id", "year"],
         how="left"
     )
+)
+
+df = df.merge(
+    sectors,
+    on="company_id",
+    how="left"
+)
+df = df.merge(
+    companies,
+    left_on="company_id",
+    right_on="company_master_id",
+    how="left"
 )
 
 print("Merged Shape:", df.shape)
@@ -88,6 +115,21 @@ df["return_on_equity_pct"] = df.apply(
     ),
     axis=1
 )
+df["return_on_capital_employed_pct"] = (
+    (
+        df["operating_profit"]
+        - df["depreciation"]
+    )
+    /
+    (
+        df["equity_capital"]
+        +
+        df["reserves"]
+        +
+        df["borrowings"]
+    )
+) * 100
+
 
 df["debt_to_equity"] = df.apply(
     lambda x: debt_to_equity(
@@ -97,6 +139,14 @@ df["debt_to_equity"] = df.apply(
     ),
     axis=1
 )
+df["high_leverage_flag"] = (
+    df["debt_to_equity"] > 5
+)
+df.loc[
+    df["broad_sector"] == "Financials",
+    "high_leverage_flag"
+] = False
+
 
 df["interest_coverage"] = df.apply(
     lambda x: interest_coverage_ratio(
@@ -227,7 +277,63 @@ df["composite_quality_score"] = (
     +
     df["asset_turnover"].fillna(0)
 )
+# ------------------------------------
+# DAY 13 EDGE CASE LOG
+# ------------------------------------
 
+log_lines = []
+
+for _, row in df.iterrows():
+
+    # ROE comparison
+
+    if pd.notna(row["roe_percentage"]):
+
+        diff = abs(
+            row["return_on_equity_pct"]
+            - row["roe_percentage"]
+        )
+
+        if diff > 5:
+
+            log_lines.append(
+                f"ROE | {row['company_id']} | "
+                f"Engine={row['return_on_equity_pct']:.2f} | "
+                f"Source={row['roe_percentage']:.2f} | "
+                f"Difference={diff:.2f}"
+            )
+
+    # ROCE comparison
+
+    if pd.notna(row["roce_percentage"]):
+
+        diff = abs(
+            row["return_on_capital_employed_pct"]
+            - row["roce_percentage"]
+        )
+
+        if diff > 5:
+
+            log_lines.append(
+                f"ROCE | {row['company_id']} | "
+                f"Engine={row['return_on_capital_employed_pct']:.2f} | "
+                f"Source={row['roce_percentage']:.2f} | "
+                f"Difference={diff:.2f}"
+            )
+
+with open(
+    "output/ratio_edge_cases.log",
+    "w",
+    encoding="utf-8"
+) as f:
+
+    for line in log_lines:
+        f.write(line + "\n")
+
+print(
+    "Edge cases logged:",
+    len(log_lines)
+)
 
 # ------------------------------------
 # PREVIEW
@@ -254,6 +360,7 @@ ratio_df = df[
         "pat_cagr_5yr",
         "eps_cagr_5yr",
         "composite_quality_score",
+        "high_leverage_flag",
     ]
 ]
 
