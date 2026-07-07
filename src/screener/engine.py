@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import numpy as np
 
 DB_PATH = "db/nifty100.db"
 
@@ -47,6 +48,65 @@ def apply_filter(df, column, minimum=None, maximum=None):
 
     return df
 
+def normalize(series):
+    s = series.fillna(series.median())
+
+    p10 = s.quantile(0.10)
+    p90 = s.quantile(0.90)
+
+    s = s.clip(lower=p10, upper=p90)
+
+    return (
+        (s - s.min())
+        /
+        (s.max() - s.min())
+    ) * 100
+
+def calculate_composite_score(df):
+
+    roe_score = normalize(
+        df["return_on_equity_pct"]
+    )
+
+    npm_score = normalize(
+        df["net_profit_margin_pct"]
+    )
+
+    revenue_score = normalize(
+        df["revenue_cagr_5yr"]
+    )
+
+    pat_score = normalize(
+        df["pat_cagr_5yr"]
+    )
+
+    fcf_score = normalize(
+        df["free_cash_flow_cr"]
+    )
+
+    icr_score = normalize(
+        df["interest_coverage"]
+            .replace(np.inf, 1000)
+    )
+
+    de_score = (
+        100 -
+        normalize(
+            df["debt_to_equity"]
+        )
+    )
+
+    score = (
+        roe_score * 0.25 +
+        npm_score * 0.10 +
+        revenue_score * 0.15 +
+        pat_score * 0.15 +
+        fcf_score * 0.20 +
+        de_score * 0.10 +
+        icr_score * 0.05
+    )
+
+    return score.round(2)
 
 def run_screener(filters):
     """
@@ -101,7 +161,9 @@ def run_screener(filters):
         )
 
     # Placeholder score
-    df["composite_quality_score"] = 0
+    df["composite_quality_score"] = (
+    calculate_composite_score(df)
+    )
 
     return df.sort_values(
         by="composite_quality_score",
