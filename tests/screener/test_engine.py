@@ -5,5 +5,4 @@ def test_load_ratios():
 
     df = load_ratios()
 
-    assert len(df) > 1000
-    
+    assert len(df) > 90

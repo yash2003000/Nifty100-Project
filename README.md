@@ -127,6 +127,18 @@ Generated company-level radar charts comparing:
 - GitHub
 
 ---
+## Key Features
+
+- Automated ETL pipeline for financial data ingestion
+- 16 Data Quality validation rules
+- SQLite-based analytical database
+- Financial ratio computation engine
+- Composite quality scoring system
+- 6 predefined stock screeners
+- Peer percentile ranking engine
+- Radar chart visualizations
+- Excel-based analytical reporting
+- Automated testing with Pytest
 
 ## Project Structure
 
@@ -145,6 +157,17 @@ config/
 ```
 
 ---
+## Test Coverage
+
+- 81 Automated Unit Tests
+- ETL Validation Tests
+- Ratio Engine Tests
+- Cash Flow KPI Tests
+- CAGR Tests
+- Screener Engine Tests
+- Preset Validation Tests
+
+Status: All tests passing (81/81)
 
 ## Status
 
@@ -155,3 +178,16 @@ Sprint 2 ✅ Complete
 Sprint 3 ✅ Complete
 
 Current Status: Ready for Sprint 4
+## Generated Outputs
+
+### Database
+- db/nifty100.db
+
+### Reports
+- output/screener_output.xlsx
+- output/peer_comparison.xlsx
+- output/load_audit.csv
+- output/dq_report.txt
+
+### Visualizations
+- reports/radar_charts/
