@@ -43,3 +43,34 @@ def get_pros_cons():
     df = pd.read_sql("SELECT * FROM prosandcons", conn)
     conn.close()
     return df
+
+
+@st.cache_data(ttl=600)
+def get_market_cap():
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql("SELECT * FROM market_cap", conn)
+    conn.close()
+    return df
+
+
+@st.cache_data(ttl=600)
+def get_peer_groups():
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql("SELECT * FROM peer_groups", conn)
+    conn.close()
+    return df
+
+@st.cache_data(ttl=600)
+def get_cashflow():
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql("SELECT * FROM cashflow", conn)
+    conn.close()
+    return df
+
+
+@st.cache_data(ttl=600)
+def get_balance_sheet():
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql("SELECT * FROM balancesheet", conn)
+    conn.close()
+    return df
