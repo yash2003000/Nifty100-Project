@@ -10,6 +10,15 @@ from utils.db import (
 
 st.title("👥 Peer Comparison Dashboard")
 
+# ---------------------------------------------------
+# Helper Function
+# ---------------------------------------------------
+
+def display_value(value, decimals=2):
+    if pd.isna(value):
+        return "N/A"
+    return f"{value:.{decimals}f}"
+
 peer_groups = get_peer_groups()
 companies = get_companies()
 ratios = get_ratios()
@@ -215,22 +224,22 @@ c1, c2, c3, c4 = st.columns(4)
 
 c1.metric(
     "ROE %",
-    f"{company['return_on_equity_pct']:.2f}"
+    display_value(company["return_on_equity_pct"])
 )
 
 c2.metric(
     "Net Margin %",
-    f"{company['net_profit_margin_pct']:.2f}"
+    display_value(company["net_profit_margin_pct"])
 )
 
 c3.metric(
     "Revenue CAGR %",
-    f"{company['revenue_cagr_5yr']:.2f}"
+    display_value(company["revenue_cagr_5yr"])
 )
 
 c4.metric(
     "Quality Score",
-    f"{company['composite_quality_score']:.2f}"
+    display_value(company["composite_quality_score"])
 )
 
 st.divider()
@@ -271,6 +280,7 @@ table = table.sort_values(
     "Quality Score",
     ascending=False
 )
+table = table.fillna("N/A")
 
 st.dataframe(
     table.style.highlight_max(
