@@ -1,7 +1,6 @@
 import streamlit as st
-import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
-
 import sys
 from pathlib import Path
 
@@ -14,7 +13,7 @@ from utils.db import (
     get_balance_sheet
 )
 
-st.title("📈 Trend Analysis")
+st.title("📈 Financial Trend Analysis")
 
 pl = get_profit_loss()
 cf = get_cashflow()
@@ -30,7 +29,7 @@ company = st.selectbox(
 metric_options = {
     "Revenue": ("sales", pl),
     "Net Profit": ("net_profit", pl),
-    "OPM %": ("opm_percentage", pl),
+    "Operating Margin %": ("opm_percentage", pl),
     "EPS": ("eps", pl),
     "Operating Cash Flow": ("operating_activity", cf),
     "Net Cash Flow": ("net_cash_flow", cf),
@@ -39,37 +38,50 @@ metric_options = {
 }
 
 selected_metrics = st.multiselect(
-    "Select up to 3 metrics",
+    "Select Metrics (Maximum 3)",
     list(metric_options.keys()),
     default=["Revenue"]
 )
 
 selected_metrics = selected_metrics[:3]
 
-fig = px.line()
+st.divider()
 
-for metric_name in selected_metrics:
+fig = go.Figure()
 
-    column_name, source_df = metric_options[metric_name]
+summary = []
 
-    temp = source_df[
-        source_df["company_id"] == company
+export_df = pd.DataFrame()
+
+for metric in selected_metrics:
+
+    column, source = metric_options[metric]
+
+    temp = source[
+        source["company_id"] == company
     ].copy()
 
     temp = temp.sort_values("year")
 
-    fig.add_scatter(
-        x=temp["year"],
-        y=temp[column_name],
-        mode="lines+markers",
-        name=metric_name
+    temp[column] = pd.to_numeric(
+        temp[column],
+        errors="coerce"
     )
 
-    yoy = temp[column_name].pct_change() * 100
+    fig.add_trace(
+        go.Scatter(
+            x=temp["year"],
+            y=temp[column],
+            mode="lines+markers",
+            name=metric
+        )
+    )
+
+    yoy = temp[column].pct_change() * 100
 
     for x, y, pct in zip(
         temp["year"],
-        temp[column_name],
+        temp[column],
         yoy
     ):
         if pd.notna(pct):
@@ -81,13 +93,69 @@ for metric_name in selected_metrics:
                 font=dict(size=9)
             )
 
+    latest_value = temp[column].dropna()
+
+    if len(latest_value):
+
+        summary.append(
+            (
+                metric,
+                latest_value.iloc[-1]
+            )
+        )
+
+    export_df["Year"] = temp["year"]
+    export_df[metric] = temp[column]
+
 fig.update_layout(
-    height=700,
-    xaxis_title="Year",
-    yaxis_title="Value"
+    title=f"{company} Financial Trends",
+    height=650,
+    hovermode="x unified",
+    xaxis_title="Financial Year",
+    yaxis_title="Value",
+    legend_title="Metrics"
 )
 
 st.plotly_chart(
     fig,
     use_container_width=True
+)
+
+st.divider()
+
+st.subheader("Latest Values")
+
+cols = st.columns(
+    max(
+        len(summary),
+        1
+    )
+)
+
+for i, (metric, value) in enumerate(summary):
+
+    cols[i].metric(
+        metric,
+        f"{value:,.2f}"
+    )
+
+st.divider()
+
+st.subheader("Trend Data")
+
+st.dataframe(
+    export_df,
+    use_container_width=True,
+    hide_index=True
+)
+
+csv = export_df.to_csv(
+    index=False
+)
+
+st.download_button(
+    "⬇ Download CSV",
+    csv,
+    file_name=f"{company}_trend_data.csv",
+    mime="text/csv"
 )

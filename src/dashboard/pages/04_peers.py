@@ -8,18 +8,53 @@ from utils.db import (
     get_ratios
 )
 
-st.title("👥 Peer Comparison")
+st.title("👥 Peer Comparison Dashboard")
 
 peer_groups = get_peer_groups()
 companies = get_companies()
 ratios = get_ratios()
 
+# ---------------------------------------------------
+# Latest financial data
+# ---------------------------------------------------
+
+latest = (
+    ratios.sort_values("year")
+    .groupby("company_id")
+    .tail(1)
+)
+
+# ---------------------------------------------------
+# Company Mapping
+# ---------------------------------------------------
+
+company_map = dict(
+    zip(
+        companies["id"],
+        companies["company_name"]
+    )
+)
+
+peer_groups["company_name"] = (
+    peer_groups["company_id"]
+    .map(company_map)
+)
+
+latest["company_name"] = (
+    latest["company_id"]
+    .map(company_map)
+)
+
+# ---------------------------------------------------
+# Peer Group Selection
+# ---------------------------------------------------
+
 group_names = sorted(
-    peer_groups["peer_group_name"].unique()
+    peer_groups["peer_group_name"].dropna().unique()
 )
 
 selected_group = st.selectbox(
-    "Select Peer Group",
+    "Peer Group",
     group_names
 )
 
@@ -27,139 +62,221 @@ group_df = peer_groups[
     peer_groups["peer_group_name"] == selected_group
 ]
 
-peer_companies = group_df["company_id"].tolist()
-
-selected_company = st.selectbox(
-    "Select Company",
-    peer_companies
+company_names = sorted(
+    group_df["company_name"].dropna().tolist()
 )
 
-benchmark_company = group_df[
-    group_df["is_benchmark"] == 1
-]["company_id"]
+selected_name = st.selectbox(
+    "Select Company",
+    company_names
+)
 
-if len(benchmark_company) > 0:
-    benchmark_company = benchmark_company.iloc[0]
-else:
-    benchmark_company = None
+selected_company = (
+    group_df[
+        group_df["company_name"] == selected_name
+    ]["company_id"]
+    .iloc[0]
+)
+
+peer_company_ids = group_df["company_id"].tolist()
+
+benchmark = group_df[
+    group_df["is_benchmark"] == 1
+]
+
+benchmark_name = ""
+
+if not benchmark.empty:
+    benchmark_name = benchmark.iloc[0]["company_name"]
+
+# ---------------------------------------------------
+# Members
+# ---------------------------------------------------
 
 st.subheader("Peer Group Members")
 
-peer_table = group_df.copy()
+members = group_df[
+    ["company_name"]
+].copy()
 
-peer_table["Benchmark"] = peer_table["company_id"].apply(
-    lambda x: "⭐" if x == benchmark_company else ""
+members["Benchmark"] = members[
+    "company_name"
+].apply(
+    lambda x: "⭐" if x == benchmark_name else ""
 )
 
 st.dataframe(
-    peer_table[
-        ["company_id", "Benchmark"]
-    ],
-    use_container_width=True
+    members,
+    use_container_width=True,
+    hide_index=True
 )
+
+if benchmark_name:
+    st.success(
+        f"Benchmark Company : {benchmark_name}"
+    )
 
 st.divider()
 
-st.subheader("Radar Chart")
+# ---------------------------------------------------
+# Radar Chart
+# ---------------------------------------------------
 
-latest = ratios.sort_values("year").groupby(
-    "company_id"
-).tail(1)
+st.subheader("Radar Comparison")
 
-metrics = [
-    "return_on_equity_pct",
-    "net_profit_margin_pct",
-    "revenue_cagr_5yr",
-    "pat_cagr_5yr",
-    "interest_coverage",
-    "asset_turnover",
-    "earnings_per_share",
-    "book_value_per_share"
-]
+metrics = {
+    "return_on_equity_pct": "ROE",
+    "net_profit_margin_pct": "Net Margin",
+    "revenue_cagr_5yr": "Revenue CAGR",
+    "pat_cagr_5yr": "PAT CAGR",
+    "interest_coverage": "Interest Cover",
+    "asset_turnover": "Asset Turnover",
+    "composite_quality_score": "Quality Score"
+}
 
 selected_row = latest[
     latest["company_id"] == selected_company
 ]
 
 peer_avg = latest[
-    latest["company_id"].isin(peer_companies)
-][metrics].mean()
+    latest["company_id"].isin(peer_company_ids)
+]
 
-if not selected_row.empty:
+company_values = []
 
-    company_values = (
-        selected_row[metrics]
-        .fillna(0)
-        .iloc[0]
-        .tolist()
-    )
+peer_values = []
 
-    peer_values = (
-        peer_avg
-        .fillna(0)
-        .tolist()
-    )
+labels = []
 
-    fig = go.Figure()
+for column, label in metrics.items():
 
-    fig.add_trace(
-        go.Scatterpolar(
-            r=company_values,
-            theta=metrics,
-            fill="toself",
-            name=selected_company
+    labels.append(label)
+
+    company_values.append(
+        float(
+            selected_row[column]
+            .fillna(0)
+            .iloc[0]
         )
     )
 
-    fig.add_trace(
-        go.Scatterpolar(
-            r=peer_values,
-            theta=metrics,
-            fill="toself",
-            name="Peer Average"
+    peer_values.append(
+        float(
+            peer_avg[column]
+            .fillna(0)
+            .mean()
         )
     )
 
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True
-            )
-        ),
-        showlegend=True
-    )
+fig = go.Figure()
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
+fig.add_trace(
+    go.Scatterpolar(
+        r=company_values,
+        theta=labels,
+        fill="toself",
+        name=selected_name
     )
+)
+
+fig.add_trace(
+    go.Scatterpolar(
+        r=peer_values,
+        theta=labels,
+        fill="toself",
+        name="Peer Average"
+    )
+)
+
+fig.update_layout(
+    polar=dict(
+        radialaxis=dict(
+            visible=True
+        )
+    ),
+    height=550,
+    showlegend=True
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
 
 st.divider()
 
-st.subheader(
-    "Peer KPI Comparison"
+# ---------------------------------------------------
+# KPI Cards
+# ---------------------------------------------------
+
+company = selected_row.iloc[0]
+
+c1, c2, c3, c4 = st.columns(4)
+
+c1.metric(
+    "ROE %",
+    f"{company['return_on_equity_pct']:.2f}"
 )
 
-peer_kpis = latest[
-    latest["company_id"].isin(peer_companies)
+c2.metric(
+    "Net Margin %",
+    f"{company['net_profit_margin_pct']:.2f}"
+)
+
+c3.metric(
+    "Revenue CAGR %",
+    f"{company['revenue_cagr_5yr']:.2f}"
+)
+
+c4.metric(
+    "Quality Score",
+    f"{company['composite_quality_score']:.2f}"
+)
+
+st.divider()
+
+# ---------------------------------------------------
+# Comparison Table
+# ---------------------------------------------------
+
+st.subheader("Peer Comparison Table")
+
+table = latest[
+    latest["company_id"].isin(peer_company_ids)
 ][
     [
-        "company_id",
+        "company_name",
         "return_on_equity_pct",
         "net_profit_margin_pct",
+        "debt_to_equity",
+        "interest_coverage",
         "revenue_cagr_5yr",
         "pat_cagr_5yr",
         "composite_quality_score"
     ]
+].copy()
+
+table.columns = [
+    "Company",
+    "ROE %",
+    "Net Margin %",
+    "Debt/Equity",
+    "Interest Cover",
+    "Revenue CAGR %",
+    "PAT CAGR %",
+    "Quality Score"
 ]
 
-st.dataframe(
-    peer_kpis,
-    use_container_width=True
+table = table.sort_values(
+    "Quality Score",
+    ascending=False
 )
 
-if benchmark_company:
-    st.success(
-        f"Benchmark Company: {benchmark_company}"
-    )
-    
+st.dataframe(
+    table.style.highlight_max(
+        subset=["Quality Score"],
+        color="#1f6f43"
+    ),
+    use_container_width=True,
+    hide_index=True
+)
