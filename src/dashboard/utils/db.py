@@ -282,3 +282,13 @@ def get_company_pros_cons(company_id):
         """,
         (company_id,)
     )
+
+@st.cache_data(ttl=600)
+def get_analysis():
+
+    query = """
+    SELECT *
+    FROM analysis
+    """
+
+    return pd.read_sql(query, get_connection())
